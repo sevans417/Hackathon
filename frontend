@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sitecore Sync Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    label {
+      font-weight: bold;
+    }
+    input, textarea, button {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .response {
+      white-space: pre-wrap;
+      background: #f8f8f8;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h2>Sitecore Sync API Frontend</h2>
+  <form id="syncForm">
+    <label for="itemPath">Item Path</label>
+    <input type="text" id="itemPath" required />
+
+    <label for="title">Title</label>
+    <input type="text" id="title" required />
+
+    <label for="eventId">Event ID</label>
+    <input type="text" id="eventId" required />
+
+    <label>
+      <input type="checkbox" id="dryRun" checked /> Dry Run Mode
+    </label>
+
+    <button type="submit">Run Sync</button>
+  </form>
+
+  <div class="response" id="response"></div>
+
+  <script>
+    document.getElementById('syncForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const itemPath = document.getElementById('itemPath').value.trim();
+      const title = document.getElementById('title').value.trim();
+      const eventId = document.getElementById('eventId').value.trim();
+      const dryRun = document.getElementById('dryRun').checked;
+
+      if (!itemPath || !title || !eventId) {
+        alert('All fields are required.');
+        return;
+      }
+
+      const payload = {
+        ItemPaths: [itemPath],
+        TitleByPath: { [itemPath]: title },
+        EventIdByPath: { [itemPath]: eventId },
+        DryRun: dryRun
+      };
+
+      const responseElement = document.getElementById('response');
+      responseElement.textContent = 'Running sync...';
+
+      try {
+        const res = await fetch('/sitecore/api/sync/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          throw new Error('Server error');
+        }
+
+        const result = await res.json();
+        responseElement.textContent = JSON.stringify(result, null, 2);
+      } catch (err) {
+        responseElement.textContent = `Error: ${err.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
